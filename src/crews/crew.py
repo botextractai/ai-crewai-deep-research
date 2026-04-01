@@ -12,15 +12,21 @@ from src.crews.guardrails.guardrails import write_report_guardrail
 # import the knoledge (user preferences)
 from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 
-# set the Exa API key
-os.environ["EXA_API_KEY"] = get_exa_api_key()
+# set the API key for the configured search provider
+if get_search_provider() != "tavily":
+    exa_key = get_exa_api_key()
+    if exa_key:
+        os.environ["EXA_API_KEY"] = exa_key
 
 
 def _get_search_tool():
     """Return the configured search tool based on SEARCH_PROVIDER env var."""
     provider = get_search_provider()
     if provider == "tavily":
-        os.environ["TAVILY_API_KEY"] = get_tavily_api_key()
+        api_key = get_tavily_api_key()
+        if not api_key:
+            raise ValueError("TAVILY_API_KEY must be set when SEARCH_PROVIDER=tavily")
+        os.environ["TAVILY_API_KEY"] = api_key
         return TavilySearchTool()
     # default to Exa
     return EXASearchTool(

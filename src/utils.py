@@ -30,9 +30,13 @@ def get_tavily_api_key():
     tavily_api_key = os.getenv("TAVILY_API_KEY")
     return tavily_api_key
 
+VALID_SEARCH_PROVIDERS = {"exa", "tavily"}
+
 def get_search_provider():
     load_env()
     provider = os.getenv("SEARCH_PROVIDER", "exa").strip().lower()
+    if provider not in VALID_SEARCH_PROVIDERS:
+        raise ValueError(f"Unknown SEARCH_PROVIDER '{provider}'. Must be one of: {VALID_SEARCH_PROVIDERS}")
     return provider
 
 def get_research_async_enabled():
