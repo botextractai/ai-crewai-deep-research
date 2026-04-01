@@ -25,6 +25,16 @@ def get_scrape_max_chars():
     scrape_max_chars = os.getenv("SCRAPE_MAX_CHARS")
     return int(scrape_max_chars)
 
+def get_tavily_api_key():
+    load_env()
+    tavily_api_key = os.getenv("TAVILY_API_KEY")
+    return tavily_api_key
+
+def get_search_provider():
+    load_env()
+    provider = os.getenv("SEARCH_PROVIDER", "exa").strip().lower()
+    return provider
+
 def get_research_async_enabled():
     load_env()
     raw_value = os.getenv("RESEARCH_ASYNC_ENABLED", "false")

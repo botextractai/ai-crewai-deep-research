@@ -1,10 +1,10 @@
 import os
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import EXASearchTool
+from crewai_tools import EXASearchTool, TavilySearchTool
 from src.tools.chart_generator_tool import ChartGeneratorTool
 from src.tools.limited_scrape_website_tool import LimitedScrapeWebsiteTool
-from src.utils import get_exa_api_key, get_exa_base_url, get_research_async_enabled
+from src.utils import get_exa_api_key, get_exa_base_url, get_tavily_api_key, get_search_provider, get_research_async_enabled
 
 # import the guardrail
 from src.crews.guardrails.guardrails import write_report_guardrail
@@ -14,6 +14,20 @@ from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledge
 
 # set the Exa API key
 os.environ["EXA_API_KEY"] = get_exa_api_key()
+
+
+def _get_search_tool():
+    """Return the configured search tool based on SEARCH_PROVIDER env var."""
+    provider = get_search_provider()
+    if provider == "tavily":
+        os.environ["TAVILY_API_KEY"] = get_tavily_api_key()
+        return TavilySearchTool()
+    # default to Exa
+    return EXASearchTool(
+        base_url=get_exa_base_url(),
+        summary=True,
+        content=False,
+    )
 
 @CrewBase
 class ParallelDeepResearchCrew:
@@ -32,27 +46,19 @@ class ParallelDeepResearchCrew:
         return Agent(
             config=self.agents_config["topic_researcher"],
             tools=[
-				EXASearchTool(
-                    base_url=get_exa_base_url(),
-                    summary=True,
-                    content=False,
-                ),
+                _get_search_tool(),
                 LimitedScrapeWebsiteTool(),
             ],
             llm='gpt-5.4-mini',
             verbose=True
         )
-    
+
     @agent
     def fact_checker(self) -> Agent:
         return Agent(
             config=self.agents_config["fact_checker"],
             tools=[
-				EXASearchTool(
-                    base_url=get_exa_base_url(),
-                    summary=True,
-                    content=False,
-                ),
+                _get_search_tool(),
                 LimitedScrapeWebsiteTool(),
             ],
             llm='gpt-5.4-mini',
